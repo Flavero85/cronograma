@@ -1,0 +1,356 @@
+<!-- 05/11/2025 00:12 -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Rotina diaria do flavero</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <meta name="theme-color" id="theme-color-meta" content="#4CAF50"/> 
+</head>
+<body class=""> 
+
+    <header>
+        <h1>👊 Rotina Diária do Flavero ✨</h1>
+    </header>
+
+    <main id="main-content">
+        <!-- Aba Início -->
+        <section id="inicio" class="content-section active">
+            <h2>🏠 Início (Dashboard)</h2>
+
+            <!-- Card de Recompensa -->
+            <div class="card reward-card">
+                <div class="reward-header">
+                    <h3>🏆 Minhas Recompensas</h3>
+                    <span id="level-display" class="level-display">Nível 1</span>
+                </div>
+                <div class="xp-bar-container">
+                    <div id="xp-bar-fill" class="xp-bar-fill"></div>
+                </div>
+                <span id="xp-text" class="xp-text">0 / 100 XP</span>
+                
+                <div class="reward-display-grid">
+                    <span>Pontos Totais:</span>
+                    <span id="user-points">0</span>
+                    <span>Sequência Atual:</span>
+                    <span id="user-streak">0 🔥</span>
+                </div>
+                <button id="complete-day-btn" disabled>Salvar Dia</button>
+            </div>
+            
+            
+            <!-- Mini Agenda Mensal -->
+            <div class="card">
+                <h3>🗓️ Mini Agenda Mensal</h3>
+                <div class="calendar-header">
+                    <button id="prev-month-btn" aria-label="Mês anterior">&lt;</button>
+                    <h3 id="month-year-display">Novembro 2025</h3>
+                    <button id="next-month-btn" aria-label="Próximo mês">&gt;</button>
+                </div>
+                <div class="calendar-weekdays">
+                    <div>Dom</div>
+                    <div>Seg</div>
+                    <div>Ter</div>
+                    <div>Qua</div>
+                    <div>Qui</div>
+                    <div>Sex</div>
+                    <div>Sáb</div>
+                </div>
+                <div id="calendar-days" class="calendar-grid">
+                    <!-- Dias serão gerados pelo JS -->
+                </div>
+            </div>
+            
+            <!-- Horários Fixos -->
+            <div class="card">
+                <h3>⏰ Horários Fixos</h3>
+                <ul id="resumo-afazeres-fixos" class="task-list simple-list">
+                    <!-- Horários fixos serão gerados pelo JS -->
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>📋 Resumo Afazeres (Pessoal)</h3>
+                <ul id="resumo-tarefas-pessoal" class="task-list">
+                    <!-- Tarefas pessoais pendentes (agora com botões) -->
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3>💼 Resumo Tarefas (Trabalho)</h3>
+                <ul id="resumo-tarefas-trabalho" class="task-list">
+                    <!-- Tarefas de trabalho pendentes (agora com botões) -->
+                </ul>
+            </div>
+
+            <!-- Dicas de Alongamento -->
+            <div class="card">
+                <h3>🤸 Dicas de Alongamento</h3>
+                <ul>
+                    <li><strong>Pescoço:</strong> Gire a cabeça lentamente para a direita, segure 5s. Repita para a esquerda.</li>
+                    <li><strong>Ombros:</strong> Levante os ombros até as orelhas, segure 3s e solte.</li>
+                    <li><strong>Pulsos:</strong> Estique o braço para frente e puxe os dedos (palma para cima) por 10s. Repita (palma para baixo).</li>
+                    <li><strong>Costas:</strong> Sente-se reto e gire o tronco para a direita, segurando na cadeira. Repita para a esquerda.</li>
+                    <li><strong>Mãos:</strong> Abra e feche as mãos com força 10 vezes. Gire os pulsos em círculos.</li>
+                    <li><strong>Peito:</strong> Entrelace os dedos atrás das costas e estique os braços, abrindo o peito.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>💡 Dicas para não Desanimar</h3>
+                <ul>
+                    <li><strong>Celebre Pequenas Vitórias:</strong> Completou a academia? É uma vitória!</li>
+                    <li><strong>Foque no Processo:</strong> Não pense no ano inteiro, pense em completar o dia de hoje.</li>
+                    <li><strong>Seja Gentil com Você:</strong> Perdeu um dia? Acontece. Apenas retome no dia seguinte sem culpa.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Aba Trabalho -->
+        <section id="trabalho" class="content-section">
+            <h2>💼 Trabalho</h2>
+            <div class="card">
+                <h3>Adicionar Tarefa</h3>
+                <form id="form-trabalho" class="task-form">
+                    <input type="text" id="input-trabalho-text" class="form-input-text" placeholder="Ex: Preparar relatório..." autocomplete="off">
+                    <!-- (ATUALIZADO) Selects de Hora/Minuto -->
+                    <select id="input-trabalho-hour" class="form-input-time-hour" aria-label="Hora"></select>
+                    <select id="input-trabalho-minute" class="form-input-time-minute" aria-label="Minuto"></select>
+                    <button type="submit">Adicionar</button>
+                </form>
+            </div>
+            <div class="card">
+                <h3>Lista de Tarefas</h3>
+                <ul id="lista-trabalho" class="task-list">
+                    <!-- Lista de tarefas de trabalho -->
+                </ul>
+            </div>
+        </section>
+
+        <!-- Aba Pessoal -->
+        <section id="pessoal" class="content-section">
+            <h2>📋 Pessoal</h2>
+            <div class="card">
+                <h3>Adicionar Afazer</h3>
+                <form id="form-pessoal" class="task-form">
+                    <input type="text" id="input-pessoal-text" class="form-input-text" placeholder="Ex: Estudar JS por 30 min..." autocomplete="off">
+                    <!-- (ATUALIZADO) Selects de Hora/Minuto -->
+                    <select id="input-pessoal-hour" class="form-input-time-hour" aria-label="Hora"></select>
+                    <select id="input-pessoal-minute" class="form-input-time-minute" aria-label="Minuto"></select>
+                    <button type="submit">Adicionar</button>
+                </form>
+            </div>
+            <div class="card">
+                <h3>Minha Lista de Afazeres</h3>
+                <ul id="lista-pessoal" class="task-list">
+                    <!-- Lista completa de afazeres pessoais -->
+                </ul>
+            </div>
+        </section>
+
+        <!-- Aba Financeiro -->
+        <section id="financeiro" class="content-section">
+            <h2>💸 Financeiro</h2>
+            <div class="card">
+                <h3>Adicionar Lançamento</h3>
+                <form id="form-financeiro" class="financial-form">
+                    <input type="text" id="input-financeiro-desc" placeholder="Descrição (Ex: Conta de luz)" required>
+                    <input type="number" id="input-financeiro-valor" placeholder="Valor (R$)" step="0.01" required>
+                    <button type="submit">Adicionar</button>
+                </form>
+            </div>
+            <div class="card">
+                <h3>Lançamentos</h3>
+                <ul id="lista-financeiro" class="task-list">
+                    <!-- Lista de lançamentos financeiros -->
+                </ul>
+                <h4 id="total-financeiro" class="total-display">Total: R$ 0,00</h4>
+            </div>
+        </section>
+
+        <!-- Aba Entretenimento -->
+        <section id="entretenimento" class="content-section">
+            <h2>🍿 Entretenimento</h2>
+            <div class="card">
+                <h3>Adicionar Item</h3>
+                <form id="form-entretenimento" class="task-form">
+                    <input type="text" id="input-entretenimento-text" class="form-input-text" placeholder="Ex: Assistir 'Filme X'..." autocomplete="off">
+                    <!-- (ATUALIZADO) Selects de Hora/Minuto -->
+                    <select id="input-entretenimento-hour" class="form-input-time-hour" aria-label="Hora"></select>
+                    <select id="input-entretenimento-minute" class="form-input-time-minute" aria-label="Minuto"></select>
+                    <button type="submit">Adicionar</button>
+                </form>
+            </div>
+            <div class="card">
+                <h3>Minha Lista</h3>
+                <ul id="lista-entretenimento" class="task-list">
+                    <!-- Lista de entretenimento -->
+                </ul>
+            </div>
+        </section>
+
+        <!-- Aba Configurações -->
+        <section id="config" class="content-section">
+            <h2>⚙️ Configurações</h2>
+
+            <!-- Input de Importação (Oculto) -->
+            <input type="file" id="import-file-input" accept=".json" style="display:none;">
+
+            <div class="card">
+                <h3>App</h3>
+                <div class="settings-group">
+                    <span>Instalar Aplicativo</span>
+                    <button id="install-pwa-btn" class="settings-button btn-install" style="display: none;">Instalar</button>
+                    <span id="install-pwa-info">App já instalado!</span>
+                </div>
+                <div class="settings-group">
+                    <span>Tema Escuro</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-dark-mode">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="settings-group">
+                    <span>Efeito de Confete</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-confetti" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- (NOVO) Card de Gerenciamento de Tarefas Fixas -->
+            <div class="card">
+                <h3>Gerenciar Horários Fixos</h3>
+                <form id="form-fixa" class="task-form">
+                    <input type="text" id="input-fixa-text" class="form-input-text" placeholder="Ex: Acordar..." autocomplete="off">
+                    <select id="input-fixa-hour" class="form-input-time-hour" aria-label="Hora"></select>
+                    <select id="input-fixa-minute" class="form-input-time-minute" aria-label="Minuto"></select>
+                    <button type="submit">Adicionar</button>
+                </form>
+                <ul id="lista-tarefas-fixas" class="task-list" style="margin-top: 1rem;">
+                    <!-- Lista de tarefas fixas gerenciáveis -->
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3>Backup e Exportação</h3>
+                <div class="settings-group">
+                    <span>Exportar Resumo (.txt)</span>
+                    <button id="export-summary-btn" class="settings-button btn-secondary">Exportar</button>
+                </div>
+                <div class="settings-group">
+                    <span>Exportar tarefas para Google Agenda</span>
+                    <button id="export-gcal-btn" class="settings-button btn-secondary">Exportar</button>
+                </div>
+                <div class="settings-group">
+                    <span>Fazer Backup (.json)</span>
+                    <button id="export-backup-btn" class="settings-button btn-secondary">Backup</button>
+                </div>
+                <div class="settings-group">
+                    <span>Importar Backup (.json)</span>
+                    <button id="import-backup-btn" class="settings-button btn-install">Importar</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Gerenciamento de Dados</h3>
+                <div class="settings-group">
+                    <span>Resetar Pontos e Sequência</span>
+                    <button id="reset-points-btn" class="settings-button btn-warning">Resetar</button>
+                </div>
+                 <div class="settings-group">
+                    <span>Limpar Tarefas (Todas)</span>
+                    <button id="reset-tasks-btn" class="settings-button btn-warning">Limpar</button>
+                </div>
+                 <div class="settings-group">
+                    <span>Limpar Lançamentos Financeiros</span>
+                    <button id="reset-finance-btn" class="settings-button btn-warning">Limpar</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>⚠️ Zona de Perigo</h3>
+                <div class="settings-group">
+                    <span>Apagar TODOS os dados do app</span>
+                    <button id="reset-all-btn" class="settings-button btn-danger">APAGAR TUDO</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Sobre</h3>
+                <form id="form-link" class="task-form">
+                    <input type="text" id="input-link" class="form-input-text" placeholder="Cole um link útil aqui..." autocomplete="off">
+                    <button type="submit">Salvar Link</button>
+                </form>
+                <div id="saved-link-container" class="saved-link-container">
+                    <!-- Link salvo aparece aqui -->
+                </div>
+                
+                                <div class="about-links">
+                    <a href="https://www.flavioitech.com" target="_blank" rel="noopener noreferrer" class="settings-button btn-secondary">Website</a>
+                    <a href="https://wa.me/5519998821845" target="_blank" rel="noopener noreferrer" class="settings-button btn-install">WhatsApp</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Navegação por Abas -->
+    <nav class="tab-nav">
+        <button class="tab-button active" data-tab="inicio">🏠 Início</button>
+        <button class="tab-button" data-tab="trabalho">💼 Trabalho</button>
+        <button class="tab-button" data-tab="pessoal">📋 Pessoal</button>
+        <button class="tab-button" data-tab="financeiro">💸 Financeiro</button>
+        <button class="tab-button" data-tab="entretenimento">🍿 Entret.</button>
+        <button class="tab-button" data-tab="config">⚙️ Config.</button>
+    </nav>
+<!-- Botão Dia de Folga -->
+            <button id="day-off-btn" class="day-off-button">Estou de Folga Hoje 🏖️</button>
+
+
+    <!-- Modal Genérico -->
+    <div id="info-modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="info-modal-title">Aviso</h3>
+            <div id="info-modal-body">
+                <p>Mensagem de aviso.</p>
+            </div>
+            <button id="info-modal-close-btn">Fechar</button>
+            <div id="info-modal-actions" style="display: none;">
+                <button id="info-modal-cancel-btn" class="btn-secondary">Cancelar</button>
+                <button id="info-modal-confirm-btn" class="btn-danger">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Dia de Folga -->
+    <div id="folga-modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="folga-modal-title">🏖️ Afazeres do Dia de Folga</h3>
+            <div id="folga-modal-body">
+                <p>O que você gostaria de fazer no seu dia livre?</p>
+                <form id="form-folga" class="task-form">
+                    <input type="text" id="input-folga-text" class="form-input-text" placeholder="Ex: Ler um livro..." autocomplete="off">
+                    <!-- (ATUALIZADO) Selects de Hora/Minuto -->
+                    <select id="input-folga-hour" class="form-input-time-hour" aria-label="Hora"></select>
+                    <select id="input-folga-minute" class="form-input-time-minute" aria-label="Minuto"></select>
+                    <button type="submit">Adicionar</button>
+                </form>
+                <ul id="lista-folga" class="task-list" style="margin-top: 1rem;">
+                    <!-- Lista de tarefas de folga -->
+                </ul>
+            </div>
+            <button id="folga-modal-close-btn">Fechar</button>
+        </div>
+    </div>
+
+    <!-- Canvas para Efeitos -->
+    <canvas id="confetti-canvas"></canvas>
+    <canvas id="bubble-canvas"></canvas>
+
+    <script src="app.js" defer></script>
+</body>
+</html>
