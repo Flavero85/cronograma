@@ -1,0 +1,21 @@
+{
+    "short_name": "Rotina Flavero",
+    "name": "Rotina diaria do flavero",
+    "description": "Aplicativo para gerenciar a nova rotina.",
+    "start_url": "index.html",
+    "display": "standalone",
+    "background_color": "#e8f5e9",
+    "theme_color": "#4CAF50",
+    "icons": [
+        {
+            "src": "icon-192x192.png",
+            "type": "image/png",
+            "sizes": "192x192"
+        },
+        {
+            "src": "icon-512x512.png",
+            "type": "image/png",
+            "sizes": "512x512"
+        }
+    ]
+}
