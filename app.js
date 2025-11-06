@@ -1,4 +1,4 @@
-/* 05/11/2025 00:12 */
+/* 05/11/2025 22:05 */
 
 document.addEventListener('DOMContentLoaded', () => {
     
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('click', () => showTab(button.dataset.tab, index));
     });
 
-    // --- 1.5. GERENCIAMENTO DE TAREFAS FIXAS (NOVO) ---
+    // --- 1.5. GERENCIAMENTO DE TAREFAS FIXAS ---
     const defaultFixedSchedule = [
         { id: 1, time: "07:00", task: "😴 Acordar" },
         { id: 2, time: "08:00", task: "☕ Café" },
@@ -65,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const fixedScheduleList = document.getElementById('resumo-afazeres-fixos');
     function renderFixedScheduleSummary() {
         fixedScheduleList.innerHTML = ''; 
-        // (ATUALIZADO) Lê de tasks_fixas
         tasks_fixas.sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99')).forEach(item => {
             const li = document.createElement('li');
             li.innerHTML = `<span class="modal-time">${item.time}</span> ${item.task}`;
@@ -83,16 +82,22 @@ document.addEventListener('DOMContentLoaded', () => {
         saveTasksFolga(); 
         saveTasksFixas();
         saveStats(); 
+        saveRewardsShop(); 
         
         // Renderiza tudo
-        renderTasksPessoal();
-        renderTasksTrabalho();
+        renderTasksPessoal('lista-pessoal');
+        renderTasksPessoal('resumo-tarefas-pessoal');
+        renderTasksTrabalho('lista-trabalho');
+        renderTasksTrabalho('resumo-tarefas-trabalho');
         renderItemsFinanceiro();
         renderTasksEntretenimento();
         renderTasksFolga(); 
-        renderTasksFixasSettings(); // (NOVO)
+        renderTasksFixasSettings(); 
         renderStats(); 
         renderFixedScheduleSummary(); 
+        renderRewardsShop(); 
+        updateCategoriesDatalist('pessoal');
+        updateCategoriesDatalist('trabalho');
 
         checkCompletionStatus();
         updateCalendarMarkers(); 
@@ -101,38 +106,76 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 2. GERENCIAMENTO TAREFAS PESSOAL (AFAZERES) ---
     const formPessoal = document.getElementById('form-pessoal');
     const inputPessoalText = document.getElementById('input-pessoal-text');
+    const inputPessoalCategory = document.getElementById('input-pessoal-category'); // (NOVO)
     const inputPessoalHour = document.getElementById('input-pessoal-hour'); 
     const inputPessoalMinute = document.getElementById('input-pessoal-minute'); 
-    const listPessoal = document.getElementById('lista-pessoal');
-    const resumoPessoal = document.getElementById('resumo-tarefas-pessoal');
     let tasks_pessoal = JSON.parse(localStorage.getItem('tasks_pessoal')) || [];
 
     function saveTasksPessoal() { localStorage.setItem('tasks_pessoal', JSON.stringify(tasks_pessoal)); }
-    function renderTasksPessoal() {
-        listPessoal.innerHTML = '';
-        resumoPessoal.innerHTML = '';
-        let pendentes = 0;
-        tasks_pessoal.sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
-        tasks_pessoal.forEach(task => {
-            listPessoal.appendChild(createTaskElement(task, 'pessoal', true));
-            if (!task.completed) {
-                const resumoLi = createTaskElement(task, 'pessoal', true);
-                resumoPessoal.appendChild(resumoLi);
-                pendentes++;
+    
+    // (ATUALIZADO) Renderiza por Categoria
+    function renderTasksPessoal(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        
+        const isResumo = (containerId === 'resumo-tarefas-pessoal');
+        const tasksToRender = isResumo ? tasks_pessoal.filter(t => !t.completed) : tasks_pessoal;
+
+        if (tasksToRender.length === 0) {
+            if (isResumo) container.innerHTML = '<p class="no-tasks-message">🎉 Nenhuma tarefa pendente!</p>';
+            else container.innerHTML = '<p class="no-tasks-message">(Sem afazeres ainda)</p>';
+            return;
+        }
+
+        // 1. Agrupar tarefas por categoria
+        const categories = tasksToRender.reduce((acc, task) => {
+            const category = task.category || 'Geral';
+            if (!acc[category]) {
+                acc[category] = [];
             }
+            acc[category].push(task);
+            return acc;
+        }, {});
+
+        // 2. Renderizar cada categoria
+        Object.keys(categories).sort().forEach(category => {
+            const categoryWrapper = document.createElement('div');
+            categoryWrapper.className = 'task-category';
+            categoryWrapper.dataset.category = category;
+            
+            const header = document.createElement('h4');
+            header.className = 'task-category-header';
+            header.textContent = category;
+            categoryWrapper.appendChild(header);
+            
+            const ul = document.createElement('ul');
+            ul.className = 'task-list';
+            
+            categories[category].sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99')).forEach(task => {
+                ul.appendChild(createTaskElement(task, 'pessoal', true));
+            });
+            
+            categoryWrapper.appendChild(ul);
+            
+            // Adicionar listeners de drag-and-drop
+            addDragDropListeners(categoryWrapper, category, 'pessoal');
+            
+            container.appendChild(categoryWrapper);
         });
-        if (pendentes === 0 && tasks_pessoal.length > 0) resumoPessoal.innerHTML = '<li>🎉 Nenhuma tarefa pendente!</li>';
-        else if (tasks_pessoal.length === 0) resumoPessoal.innerHTML = '<li>(Sem afazeres hoje)</li>';
     }
+
     formPessoal.addEventListener('submit', (e) => {
         e.preventDefault();
         const text = inputPessoalText.value.trim();
+        const category = inputPessoalCategory.value.trim() || 'Geral'; // (NOVO)
         const hour = inputPessoalHour.value;
         const minute = inputPessoalMinute.value;
         const time = (hour && minute) ? `${hour}:${minute}` : ''; 
         if (text) {
-            tasks_pessoal.push({ id: Date.now(), text, time, completed: false }); 
+            tasks_pessoal.push({ id: Date.now(), text, time, category, completed: false }); // (ATUALIZADO)
             inputPessoalText.value = '';
+            inputPessoalCategory.value = ''; // (NOVO)
             inputPessoalHour.value = ''; 
             inputPessoalMinute.value = ''; 
             saveAndRenderAll();
@@ -142,45 +185,92 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 3. GERENCIAMENTO TAREFAS TRABALHO ---
     const formTrabalho = document.getElementById('form-trabalho');
     const inputTrabalhoText = document.getElementById('input-trabalho-text');
+    const inputTrabalhoCategory = document.getElementById('input-trabalho-category'); // (NOVO)
     const inputTrabalhoHour = document.getElementById('input-trabalho-hour'); 
     const inputTrabalhoMinute = document.getElementById('input-trabalho-minute'); 
-    const listTrabalho = document.getElementById('lista-trabalho');
-    const resumoTrabalho = document.getElementById('resumo-tarefas-trabalho');
     let tasks_trabalho = JSON.parse(localStorage.getItem('tasks_trabalho')) || [];
 
     function saveTasksTrabalho() { localStorage.setItem('tasks_trabalho', JSON.stringify(tasks_trabalho)); }
-    function renderTasksTrabalho() {
-        listTrabalho.innerHTML = '';
-        resumoTrabalho.innerHTML = '';
-        let pendentes = 0;
-        tasks_trabalho.sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
-        tasks_trabalho.forEach(task => {
-            listTrabalho.appendChild(createTaskElement(task, 'trabalho', true));
-            if (!task.completed) {
-                 const resumoLi = createTaskElement(task, 'trabalho', true);
-                resumoTrabalho.appendChild(resumoLi);
-                pendentes++;
-            }
+    
+    // (ATUALIZADO) Renderiza por Categoria
+    function renderTasksTrabalho(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        
+        const isResumo = (containerId === 'resumo-tarefas-trabalho');
+        const tasksToRender = isResumo ? tasks_trabalho.filter(t => !t.completed) : tasks_trabalho;
+
+        if (tasksToRender.length === 0) {
+            if (isResumo) container.innerHTML = '<p class="no-tasks-message">🎉 Nenhuma tarefa pendente!</p>';
+            else container.innerHTML = '<p class="no-tasks-message">(Sem tarefas ainda)</p>';
+            return;
+        }
+
+        const categories = tasksToRender.reduce((acc, task) => {
+            const category = task.category || 'Geral';
+            if (!acc[category]) acc[category] = [];
+            acc[category].push(task);
+            return acc;
+        }, {});
+
+        Object.keys(categories).sort().forEach(category => {
+            const categoryWrapper = document.createElement('div');
+            categoryWrapper.className = 'task-category';
+            categoryWrapper.dataset.category = category;
+            
+            const header = document.createElement('h4');
+            header.className = 'task-category-header';
+            header.textContent = category;
+            categoryWrapper.appendChild(header);
+            
+            const ul = document.createElement('ul');
+            ul.className = 'task-list';
+            
+            categories[category].sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99')).forEach(task => {
+                ul.appendChild(createTaskElement(task, 'trabalho', true));
+            });
+            
+            categoryWrapper.appendChild(ul);
+            
+            // Adicionar listeners de drag-and-drop
+            addDragDropListeners(categoryWrapper, category, 'trabalho');
+            
+            container.appendChild(categoryWrapper);
         });
-        if (pendentes === 0 && tasks_trabalho.length > 0) resumoTrabalho.innerHTML = '<li>🎉 Nenhuma tarefa pendente!</li>';
-        else if (tasks_trabalho.length === 0) resumoTrabalho.innerHTML = '<li>(Sem tarefas de trabalho)</li>';
     }
+
     formTrabalho.addEventListener('submit', (e) => {
         e.preventDefault();
         const text = inputTrabalhoText.value.trim();
+        const category = inputTrabalhoCategory.value.trim() || 'Geral'; // (NOVO)
         const hour = inputTrabalhoHour.value;
         const minute = inputTrabalhoMinute.value;
         const time = (hour && minute) ? `${hour}:${minute}` : ''; 
         if (text) {
-            tasks_trabalho.push({ id: Date.now(), text, time, completed: false }); 
+            tasks_trabalho.push({ id: Date.now(), text, time, category, completed: false }); // (ATUALIZADO)
             inputTrabalhoText.value = '';
+            inputTrabalhoCategory.value = ''; // (NOVO)
             inputTrabalhoHour.value = ''; 
             inputTrabalhoMinute.value = ''; 
             saveAndRenderAll();
         }
     });
 
-    // --- 4. GERENCIAMENTO FINANCEIRO (Editável) ---
+    // (NOVO) Atualiza Datalists de Categoria
+    function updateCategoriesDatalist(type) {
+        const tasks = type === 'pessoal' ? tasks_pessoal : tasks_trabalho;
+        const datalist = document.getElementById(`${type}-categories`);
+        if (!datalist) return;
+        
+        const categories = [...new Set(tasks.map(t => t.category || 'Geral'))];
+        datalist.innerHTML = '';
+        categories.forEach(category => {
+            datalist.innerHTML += `<option value="${category}"></option>`;
+        });
+    }
+
+    // --- 4. GERENCIAMENTO FINANCEIRO ---
     const formFinanceiro = document.getElementById('form-financeiro');
     const inputFinanceiroDesc = document.getElementById('input-financeiro-desc');
     const inputFinanceiroValor = document.getElementById('input-financeiro-valor');
@@ -250,6 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
         listEntretenimento.innerHTML = '';
         tasks_entretenimento.sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
         tasks_entretenimento.forEach(task => {
+            // (ATUALIZADO) usa 'entretenimento'
             listEntretenimento.appendChild(createTaskElement(task, 'entretenimento', true));
         });
     }
@@ -272,8 +363,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function createTaskElement(task, type, isTask = true) {
         const li = document.createElement('li');
         li.setAttribute('data-id', task.id);
+        li.setAttribute('draggable', true); // (NOVO) Draggable
         if (task.completed) li.classList.add('completed');
         
+        // (NOVO) Listener de Drag
+        li.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', task.id);
+            e.dataTransfer.setData('task-type', type);
+            setTimeout(() => li.classList.add('dragging'), 0);
+        });
+        li.addEventListener('dragend', () => li.classList.remove('dragging'));
+
         const taskInfo = document.createElement('div');
         taskInfo.className = 'task-info';
         
@@ -291,8 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const actionsContainer = document.createElement('div');
         actionsContainer.className = 'task-actions';
         
-        // (ATUALIZADO) Botão Concluir / Desfazer
-        if(type !== 'fixa') { // Tarefas fixas não podem ser completadas
+        if(type !== 'fixa') { 
             const completeBtn = document.createElement('button');
             completeBtn.innerHTML = task.completed ? '↩️' : '✔️'; 
             completeBtn.className = task.completed ? 'btn-undo' : 'btn-complete';
@@ -301,8 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
             actionsContainer.appendChild(completeBtn); 
         }
         
-        // (ATUALIZADO) Botão Editar
-        if(type !== 'fixa') { // Tarefas fixas não podem ser editadas (só excluídas)
+        if(type !== 'fixa') { 
             const editBtn = document.createElement('button');
             editBtn.className = 'edit-btn';
             editBtn.innerHTML = '✏️'; 
@@ -368,7 +466,6 @@ document.addEventListener('DOMContentLoaded', () => {
         editInput.addEventListener('blur', saveAction); 
     }
 
-    // (LÓGICA ATUALIZADA)
     function toggleTask(type, id) {
         let list;
         if (type === 'pessoal') list = tasks_pessoal;
@@ -379,35 +476,62 @@ document.addEventListener('DOMContentLoaded', () => {
         if (list) {
             const task = list.find(t => t.id === id);
             if (task) {
+                const oldLevelInfo = calculateLevel(userStats.points);
                 const wasCompleted = task.completed;
                 task.completed = !task.completed;
-                
-                // (ATUALIZADO) 10 XP por tarefa
                 const pointsPerTask = 10; 
-
                 if (task.completed && !wasCompleted) {
-                    // Completou a tarefa
                     userStats.points += pointsPerTask;
                     if (confettiEnabled) triggerConfetti();
                 } else if (!task.completed && wasCompleted) {
-                    // Desfez a tarefa
                     userStats.points = Math.max(0, userStats.points - pointsPerTask);
+                }
+                const newLevelInfo = calculateLevel(userStats.points);
+                if (newLevelInfo.level > oldLevelInfo.level) {
+                    triggerLevelUp(newLevelInfo.level);
                 }
             }
             saveAndRenderAll();
         }
     }
     
-    // (LÓGICA ATUALIZADA)
     function deleteTask(type, id) {
         if (type === 'pessoal') tasks_pessoal = tasks_pessoal.filter(t => t.id !== id);
         else if (type === 'trabalho') tasks_trabalho = tasks_trabalho.filter(t => t.id !== id);
         else if (type === 'entretenimento') tasks_entretenimento = tasks_entretenimento.filter(t => t.id !== id);
         else if (type === 'folga') tasks_folga = tasks_folga.filter(t => t.id !== id);
-        else if (type === 'fixa') tasks_fixas = tasks_fixas.filter(t => t.id !== id); // (NOVO)
+        else if (type === 'fixa') tasks_fixas = tasks_fixas.filter(t => t.id !== id); 
         saveAndRenderAll();
     }
     
+    // --- 6.5 (NOVO) DRAG AND DROP (Recategorizar) ---
+    function addDragDropListeners(categoryWrapper, category, type) {
+        categoryWrapper.addEventListener('dragover', (e) => {
+            e.preventDefault(); 
+            categoryWrapper.classList.add('drag-over');
+        });
+        categoryWrapper.addEventListener('dragleave', () => {
+            categoryWrapper.classList.remove('drag-over');
+        });
+        categoryWrapper.addEventListener('drop', (e) => {
+            e.preventDefault();
+            categoryWrapper.classList.remove('drag-over');
+            
+            const taskId = parseInt(e.dataTransfer.getData('text/plain'));
+            const taskType = e.dataTransfer.getData('task-type');
+            
+            if (taskType !== type) return; // Não permite dropar entre Pessoal e Trabalho
+
+            let list = (type === 'pessoal') ? tasks_pessoal : tasks_trabalho;
+            const task = list.find(t => t.id === taskId);
+            
+            if (task && task.category !== category) {
+                task.category = category;
+                saveAndRenderAll();
+            }
+        });
+    }
+
     // --- 7. GERENCIAMENTO DA AGENDA MENSAL (Interativa) ---
     let currentViewDate = new Date(); 
     const today = new Date(); 
@@ -475,18 +599,17 @@ document.addEventListener('DOMContentLoaded', () => {
         let level = 1;
         let pointsNeededForNextLevel = 100; 
         let pointsInCurrentLevel = totalPoints;
-
         while (pointsInCurrentLevel >= pointsNeededForNextLevel) {
             pointsInCurrentLevel -= pointsNeededForNextLevel;
             pointsNeededForNextLevel = Math.floor(pointsNeededForNextLevel * 1.5); 
             level++;
         }
-        
-        return { 
-            level: level, 
-            currentLevelPoints: pointsInCurrentLevel, 
-            pointsForNextLevel: pointsNeededForNextLevel 
-        };
+        return { level, currentLevelPoints: pointsInCurrentLevel, pointsForNextLevel: pointsNeededForNextLevel };
+    }
+
+    function getLevelIcon(level) {
+        if (level < 5) return '🌱'; if (level < 10) return '🌳'; if (level < 15) return '🌟';
+        if (level < 20) return '💎'; if (level < 25) return '🏆'; return '🚀';
     }
 
     function renderStats() {
@@ -494,10 +617,14 @@ document.addEventListener('DOMContentLoaded', () => {
         userStreakDisplay.textContent = `${userStats.streak} 🔥`;
         
         const { level, currentLevelPoints, pointsForNextLevel } = calculateLevel(userStats.points);
-        levelDisplay.textContent = `Nível ${level}`;
+        const icon = getLevelIcon(level);
+        
+        levelDisplay.innerHTML = `<span>${icon}</span> Nível ${level}`; 
         xpText.textContent = `${currentLevelPoints} / ${pointsForNextLevel} XP`;
         const xpPercentage = (currentLevelPoints / pointsForNextLevel) * 100;
         xpBarFill.style.width = `${xpPercentage}%`;
+
+        document.getElementById('loja-pontos-display').textContent = userStats.points; 
     }
 
     function checkStreakOnLoad() {
@@ -509,7 +636,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // (LÓGICA ATUALIZADA)
     function checkCompletionStatus() {
         const todayString = getFormattedDate(new Date());
         if (userStats.last_completed === todayString) {
@@ -523,20 +649,14 @@ document.addEventListener('DOMContentLoaded', () => {
             completeDayBtn.disabled = true;
             return;
         }
-        
         const totalTasks = tasks_pessoal.length + tasks_trabalho.length;
-        
         if (totalTasks === 0) {
             completeDayBtn.textContent = 'Adicione tarefas para Salvar';
             completeDayBtn.disabled = true;
             return;
         }
-        
-        // (ATUALIZADO) Botão fica sempre ativo se houver tarefas
         completeDayBtn.disabled = false; 
-        
         const completedTasks = tasks_pessoal.filter(t => t.completed).length + tasks_trabalho.filter(t => t.completed).length;
-        
         if (completedTasks === totalTasks) {
             completeDayBtn.textContent = 'Salvar Dia e Coletar Bônus! 🚀';
         } else {
@@ -544,7 +664,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // (LÓGICA ATUALIZADA)
     completeDayBtn.addEventListener('click', () => {
         const todayStr = getFormattedDate(new Date());
         if (userStats.last_completed === todayStr || completeDayBtn.disabled) return;
@@ -553,29 +672,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const allTrabalhoDone = tasks_trabalho.every(task => task.completed);
         
         if (allPessoalDone && allTrabalhoDone) {
+            const oldLevelInfo = calculateLevel(userStats.points); 
+            
             const yesterdayStr = getFormattedDate(new Date(Date.now() - 86400000));
             let streakBonus = 0;
-            
             if (userStats.last_completed === yesterdayStr) {
                 userStats.streak++;
             } else {
                 userStats.streak = 1; 
             }
-            
-            // Bônus por salvar o dia (50 + 10 por dia de streak)
             streakBonus = 50 + (userStats.streak * 10); 
-            userStats.points += streakBonus; // Adiciona o bônus
+            userStats.points += streakBonus; 
             userStats.last_completed = todayStr;
             
-            saveAndRenderAll(); // Salva e renderiza
+            const newLevelInfo = calculateLevel(userStats.points); 
+            if (newLevelInfo.level > oldLevelInfo.level) {
+                triggerLevelUp(newLevelInfo.level);
+            }
+            
+            saveAndRenderAll(); 
             
             if (confettiEnabled) triggerConfetti();
             showInfoModal("Bônus de Sequência! 🥳", `<p style="text-align: center; font-size: 1.1rem;">Você completou todas as tarefas e ganhou <strong>+${streakBonus} pontos de bônus</strong>! <br><br>Sua sequência agora é de <strong>${userStats.streak} dias</strong>! 🔥</p>`);
         } else {
-            // Salva o dia (sem bônus)
             showConfirmModal("Salvar Dia?", "<p>Você não completou todas as tarefas. Deseja 'Salvar o Dia' assim mesmo? Você <strong>não</strong> ganhará o bônus de sequência.</p>", () => {
                  userStats.last_completed = todayStr; 
-                 userStats.streak = 0; // Quebra a sequência
+                 userStats.streak = 0; 
                  saveAndRenderAll();
                  showInfoModal("Dia Salvo", "<p>O dia foi salvo, mas a sequência foi perdida. Complete tudo amanhã para começar uma nova!</p>");
             });
@@ -626,7 +748,6 @@ document.addEventListener('DOMContentLoaded', () => {
         modalTitle.textContent = date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
         let contentHTML = '<ul>';
         
-        // (ATUALIZADO) Lê de tasks_fixas
         tasks_fixas.sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99')).forEach(item => {
             contentHTML += `<li><span class="modal-time">${item.time}</span> ${item.task}</li>`;
         });
@@ -645,20 +766,31 @@ document.addEventListener('DOMContentLoaded', () => {
              }
         } 
         else if (clickedDateString === getFormattedDate(today)) {
+            // (ATUALIZADO) Renderiza por Categoria no Modal
             contentHTML += '<li><strong>📋 Afazeres Pessoal:</strong></li>';
+            const categoriesPessoal = tasks_pessoal.reduce((acc, task) => { (acc[task.category || 'Geral'] = acc[task.category || 'Geral'] || []).push(task); return acc; }, {});
             if (tasks_pessoal.length > 0) {
-                tasks_pessoal.forEach(task => {
-                    const statusClass = task.completed ? 'modal-task-completed' : 'modal-task-pending';
-                    contentHTML += `<li class="${statusClass}">${task.time ? `<span class="modal-time">${task.time}</span>` : ''}${task.text}</li>`;
+                Object.keys(categoriesPessoal).sort().forEach(category => {
+                    contentHTML += `<li><strong>${category}</strong></li>`;
+                    categoriesPessoal[category].forEach(task => {
+                        const statusClass = task.completed ? 'modal-task-completed' : 'modal-task-pending';
+                        contentHTML += `<li class="${statusClass}">${task.time ? `<span class="modal-time">${task.time}</span>` : ''}${task.text}</li>`;
+                    });
                 });
             } else { contentHTML += '<li class="modal-no-tasks">(Sem afazeres hoje)</li>'; }
+
             contentHTML += '<li><strong>💼 Tarefas Trabalho:</strong></li>';
+            const categoriesTrabalho = tasks_trabalho.reduce((acc, task) => { (acc[task.category || 'Geral'] = acc[task.category || 'Geral'] || []).push(task); return acc; }, {});
             if (tasks_trabalho.length > 0) {
-                 tasks_trabalho.forEach(task => {
-                    const statusClass = task.completed ? 'modal-task-completed' : 'modal-task-pending';
-                    contentHTML += `<li class="${statusClass}">${task.time ? `<span class="modal-time">${task.time}</span>` : ''}${task.text}</li>`;
+                 Object.keys(categoriesTrabalho).sort().forEach(category => {
+                    contentHTML += `<li><strong>${category}</strong></li>`;
+                    categoriesTrabalho[category].forEach(task => {
+                        const statusClass = task.completed ? 'modal-task-completed' : 'modal-task-pending';
+                        contentHTML += `<li class="${statusClass}">${task.time ? `<span class="modal-time">${task.time}</span>` : ''}${task.text}</li>`;
+                    });
                 });
             } else { contentHTML += '<li class="modal-no-tasks">(Sem tarefas de trabalho hoje)</li>'; }
+
         } else {
              contentHTML += '<li class="modal-no-tasks">(Afazeres são gerenciados apenas para o dia de hoje.)</li>';
         }
@@ -708,12 +840,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchStartX = 0; let touchEndX = 0; const swipeThreshold = 50; 
     mainElement.addEventListener('touchstart', (e) => {
         const targetTag = e.target.tagName.toLowerCase();
-        if (targetTag === 'input' || targetTag === 'button' || targetTag === 'select' || e.target.closest('.calendar-grid') || e.target.closest('.slider')) { return; }
+        if (targetTag === 'input' || targetTag === 'button' || targetTag === 'select' || e.target.closest('.calendar-grid') || e.target.closest('.slider') || e.target.closest('[draggable="true"]')) { return; }
         touchStartX = e.changedTouches[0].screenX;
     }, { passive: true });
     mainElement.addEventListener('touchend', (e) => {
         const targetTag = e.target.tagName.toLowerCase();
-        if (targetTag === 'input' || targetTag === 'button' || targetTag === 'select' || e.target.closest('.calendar-grid') || e.target.closest('.slider') || touchStartX === 0) { touchStartX = 0; return; }
+        if (targetTag === 'input' || targetTag === 'button' || targetTag === 'select' || e.target.closest('.calendar-grid') || e.target.closest('.slider') || e.target.closest('[draggable="true"]') || touchStartX === 0) { touchStartX = 0; return; }
         touchEndX = e.changedTouches[0].screenX; const diffX = touchEndX - touchStartX;
         if (Math.abs(diffX) > swipeThreshold) {
             if (diffX < 0) { const nextIndex = Math.min(currentTabIndex + 1, tabButtons.length - 1); showTab(tabButtons[nextIndex].dataset.tab, nextIndex); } 
@@ -785,7 +917,8 @@ document.addEventListener('DOMContentLoaded', () => {
             todayTasks.forEach(task => {
                 const status = task.completed ? '[X]' : '[ ]';
                 const time = task.time ? `(${task.time})` : '';
-                summary += `${status} ${time} ${task.text}\n`;
+                const category = task.category ? `[${task.category}] ` : ''; // (NOVO)
+                summary += `${status} ${time} ${category}${task.text}\n`;
             });
         } else {
             summary += "Nenhuma tarefa registrada para hoje.\n";
@@ -836,7 +969,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function exportBackupJson() {
         const allData = {
             tasks_pessoal, tasks_trabalho, items_financeiro, tasks_entretenimento, tasks_folga,
-            tasks_fixas, // (NOVO)
+            tasks_fixas, 
+            rewards_shop, 
             userStats,
             dias_folga: JSON.parse(localStorage.getItem('dias_folga')) || [],
             darkMode: isDarkMode,
@@ -882,7 +1016,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     items_financeiro = importedData.items_financeiro || [];
                     tasks_entretenimento = importedData.tasks_entretenimento || [];
                     tasks_folga = importedData.tasks_folga || [];
-                    tasks_fixas = importedData.tasks_fixas || defaultFixedSchedule; // (NOVO)
+                    tasks_fixas = importedData.tasks_fixas || defaultFixedSchedule; 
+                    rewards_shop = importedData.rewards_shop || []; 
                     userStats = importedData.userStats || { points: 0, last_completed: null, streak: 0 };
                     localStorage.setItem('dias_folga', JSON.stringify(importedData.dias_folga || []));
                     localStorage.setItem('darkMode', JSON.stringify(importedData.darkMode || false));
@@ -938,11 +1073,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetPointsBtn = document.getElementById('reset-points-btn');
     const resetTasksBtn = document.getElementById('reset-tasks-btn');
     const resetFinanceBtn = document.getElementById('reset-finance-btn');
+    const resetLojaBtn = document.getElementById('reset-loja-btn'); 
     const resetAllBtn = document.getElementById('reset-all-btn');
     resetPointsBtn.addEventListener('click', () => {
         showConfirmModal("Resetar Pontos", "<p>Tem certeza que deseja zerar seus pontos e sua sequência?</p>", () => {
             userStats = { points: 0, last_completed: null, streak: 0 };
-            saveStats(); renderStats(); checkCompletionStatus();
+            saveAndRenderAll();
             showInfoModal("Sucesso", "<p>Seus pontos e sequência foram zerados.</p>");
         });
     });
@@ -958,6 +1094,13 @@ document.addEventListener('DOMContentLoaded', () => {
             items_financeiro = [];
             saveAndRenderAll();
             showInfoModal("Sucesso", "<p>Seus lançamentos financeiros foram limpos.</p>");
+        });
+    });
+    resetLojaBtn.addEventListener('click', () => {
+         showConfirmModal("Limpar Loja", "<p>Tem certeza que deseja apagar todas as recompensas criadas na loja?</p>", () => {
+            rewards_shop = [];
+            saveAndRenderAll();
+            showInfoModal("Sucesso", "<p>Sua loja de recompensas foi limpa.</p>");
         });
     });
     resetAllBtn.addEventListener('click', () => {
@@ -1001,7 +1144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 12.9. (NOVO) GERENCIAR TAREFAS FIXAS (CONFIG) ---
+    // --- 12.9. GERENCIAR TAREFAS FIXAS (CONFIG) ---
     const formFixa = document.getElementById('form-fixa');
     const inputFixaText = document.getElementById('input-fixa-text');
     const inputFixaHour = document.getElementById('input-fixa-hour');
@@ -1011,7 +1154,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderTasksFixasSettings() {
         listFixa.innerHTML = '';
         tasks_fixas.sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99')).forEach(task => {
-            // Usamos a função global, mas dizemos para não incluir botões de "concluir" ou "editar"
             listFixa.appendChild(createTaskElement(task, 'fixa', false));
         });
     }
@@ -1023,8 +1165,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const minute = inputFixaMinute.value;
         const time = (hour && minute) ? `${hour}:${minute}` : ''; 
         
-        if (text && time) { // Tarefa fixa precisa de horário
-            tasks_fixas.push({ id: Date.now(), text, time, task: text }); // task: text para compatibilidade
+        if (text && time) { 
+            tasks_fixas.push({ id: Date.now(), text, time, task: text }); 
             inputFixaText.value = '';
             inputFixaHour.value = '';
             inputFixaMinute.value = '';
@@ -1113,7 +1255,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     window.addEventListener('resize', resizeBubbleCanvas);
 
-    // --- 15. (NOVO) POPULAR SELECTS DE HORA/MINUTO ---
+    // --- 15. POPULAR SELECTS DE HORA/MINUTO ---
     function populateTimeSelects() {
         const forms = ['pessoal', 'trabalho', 'entretenimento', 'folga', 'fixa'];
         
@@ -1123,17 +1265,14 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!hourSelect || !minuteSelect) return;
 
-            // Opção vazia (sem horário)
             hourSelect.innerHTML = '<option value="">-- Hora --</option>';
             minuteSelect.innerHTML = '<option value="">-- Min --</option>';
 
-            // Horas (00-23)
             for (let i = 0; i < 24; i++) {
                 const hour = String(i).padStart(2, '0');
                 hourSelect.innerHTML += `<option value="${hour}">${hour}</option>`;
             }
             
-            // Minutos (00-55, de 5 em 5)
             for (let i = 0; i < 60; i += 5) {
                 const minute = String(i).padStart(2, '0');
                 minuteSelect.innerHTML += `<option value="${minute}">${minute}</option>`;
@@ -1141,14 +1280,190 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 16. INICIALIZAÇÃO GERAL ---
-    populateTimeSelects(); // (NOVO)
+    // --- 16. (ATUALIZADO) LOJA DE RECOMPENSAS ---
+    const formLoja = document.getElementById('form-loja');
+    const inputLojaText = document.getElementById('input-loja-text');
+    const inputLojaCost = document.getElementById('input-loja-cost');
+    const listLoja = document.getElementById('lista-loja');
+    // (ATUALIZADO) 13 novos itens
+    let rewards_shop = JSON.parse(localStorage.getItem('rewards_shop')) || [
+        { id: 1, text: "15 min. Rede Social", cost: 50 },
+        { id: 2, text: "1 Café Especial", cost: 70 },
+        { id: 3, text: "1 Episódio de Série", cost: 150 },
+        { id: 4, text: "30 min. de Jogo", cost: 200 },
+        { id: 5, text: "1h de Jogo", cost: 300 },
+        { id: 6, text: "1 Sobremesa", cost: 350 },
+        { id: 7, text: "Assistir um Filme", cost: 400 },
+        { id: 8, text: "Pedir Comida (iFood)", cost: 1000 },
+        { id: 9, text: "Comprar Roupa Nova", cost: 1500 },
+        { id: 10, text: "1 dia de Folga Total", cost: 2000 },
+        { id: 11, "text": "Jantar Fora", cost: 1200 },
+        { id: 12, "text": "Passeio no Parque", cost: 250 },
+        { id: 13, "text": "Soneca de 30 min", cost: 100 },
+        { id: 14, "text": "Música alta por 15 min", cost: 50 },
+        { id: 15, "text": "Comprar um Livro", cost: 800 }
+    ];
+    
+    function saveRewardsShop() { localStorage.setItem('rewards_shop', JSON.stringify(rewards_shop)); }
+
+    function renderRewardsShop() {
+        listLoja.innerHTML = '';
+        if (rewards_shop.length === 0) {
+            listLoja.innerHTML = '<li>(Crie suas próprias recompensas!)</li>';
+            return;
+        }
+        
+        rewards_shop.sort((a, b) => a.cost - b.cost).forEach(reward => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <div class="reward-shop-info">
+                    <span class="reward-shop-text">${reward.text}</span>
+                    <span class="reward-shop-cost">${reward.cost} XP</span>
+                </div>
+                <button class="btn-redeem" data-id="${reward.id}" data-cost="${reward.cost}">Resgatar</button>
+            `;
+            
+            const redeemBtn = li.querySelector('.btn-redeem');
+            if (userStats.points < reward.cost) {
+                redeemBtn.disabled = true;
+            }
+            
+            redeemBtn.addEventListener('click', () => redeemReward(reward));
+            listLoja.appendChild(li);
+        });
+    }
+
+    function redeemReward(reward) {
+        if (userStats.points < reward.cost) {
+            showInfoModal("Pontos Insuficientes", "<p>Você não tem XP suficiente para resgatar esta recompensa.</p>");
+            return;
+        }
+        
+        showConfirmModal("Resgatar Recompensa?", `<p>Deseja gastar <strong>${reward.cost} XP</strong> para resgatar: <strong>${reward.text}</strong>?</p>`, () => {
+            userStats.points -= reward.cost;
+            saveAndRenderAll(); 
+            showInfoModal("Recompensa Resgatada!", `<p>Você resgatou "${reward.text}"! Aproveite!</p>`);
+        });
+    }
+
+    formLoja.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const text = inputLojaText.value.trim();
+        const cost = parseInt(inputLojaCost.value);
+        
+        if (text && cost && cost > 0) {
+            rewards_shop.push({ id: Date.now(), text, cost });
+            inputLojaText.value = '';
+            inputLojaCost.value = '';
+            saveAndRenderAll();
+        } else {
+            showInfoModal("Erro", "<p>Por favor, preencha o nome e um custo válido.</p>");
+        }
+    });
+
+    // --- 17. ANIMAÇÃO DE LEVEL UP ---
+    const levelUpModal = document.getElementById('level-up-modal-overlay');
+    const levelUpIcon = document.getElementById('level-up-icon');
+    const levelUpText = document.getElementById('level-up-text');
+    const levelUpCloseBtn = document.getElementById('level-up-close-btn');
+    
+    function playLevelUpSound() {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator(); const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
+            oscillator.type = 'triangle'; gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.05);
+            oscillator.frequency.linearRampToValueAtTime(400, audioContext.currentTime + 0.1);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.15);
+            oscillator.frequency.linearRampToValueAtTime(500, audioContext.currentTime + 0.2);
+            gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.25);
+            oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.3);
+            gainNode.gain.setValueAtTime(0.5, audioContext.currentTime + 0.3);
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.6);
+            oscillator.start(audioContext.currentTime); oscillator.stop(audioContext.currentTime + 0.6);
+        } catch (e) { console.warn("Web Audio API não suportada ou falhou.", e); }
+    }
+
+    function triggerLevelUp(level) {
+        const icon = getLevelIcon(level);
+        levelUpIcon.textContent = icon;
+        levelUpText.textContent = `Nível ${level}!`;
+        levelUpModal.classList.add('active');
+        playLevelUpSound();
+        setTimeout(hideLevelUpModal, 3000); 
+    }
+    
+    function hideLevelUpModal() { levelUpModal.classList.remove('active'); }
+    levelUpCloseBtn.addEventListener('click', hideLevelUpModal);
+
+    // --- 18. (NOVO) NOTIFICAÇÕES LOCAIS ---
+    const enableNotificationsBtn = document.getElementById('enable-notifications-btn');
+    const notificationsInfo = document.getElementById('notifications-info');
+    let notificationPermission = Notification.permission;
+
+    function updateNotificationButton() {
+        if (notificationPermission === 'granted') {
+            enableNotificationsBtn.style.display = 'none';
+            notificationsInfo.style.display = 'block';
+        } else {
+            enableNotificationsBtn.style.display = 'block';
+            notificationsInfo.style.display = 'none';
+        }
+    }
+
+    enableNotificationsBtn.addEventListener('click', async () => {
+        notificationPermission = await Notification.requestPermission();
+        updateNotificationButton();
+        if (notificationPermission === 'granted') {
+            showInfoModal("Notificações Ativadas!", "<p>Você receberá lembretes das suas tarefas.</p>");
+        } else {
+            showInfoModal("Notificações Bloqueadas", "<p>Você precisa permitir as notificações nas configurações do seu navegador para receber lembretes.</p>");
+        }
+    });
+
+    let notifiedTasks = new Set(); // Para não notificar duas vezes
+    function checkTaskReminders() {
+        if (notificationPermission !== 'granted') return;
+
+        const now = new Date();
+        const alertTime = new Date(now.getTime() + 5 * 60000); // 5 minutos no futuro
+        const currentHour = String(alertTime.getHours()).padStart(2, '0');
+        const currentMinute = String(alertTime.getMinutes()).padStart(2, '0');
+        const currentTime = `${currentHour}:${currentMinute}`;
+        
+        const allTasks = [...tasks_fixas, ...tasks_pessoal, ...tasks_trabalho, ...tasks_folga];
+        
+        allTasks.forEach(task => {
+            if (task.time === currentTime && !notifiedTasks.has(task.id) && !task.completed) {
+                const swRegistration = navigator.serviceWorker.getRegistration();
+                if (swRegistration) {
+                    swRegistration.then(reg => {
+                        reg.showNotification('Lembrete de Tarefa!', {
+                            body: `Às ${task.time}: ${task.text}`,
+                            icon: 'icon-192x192.png',
+                            badge: 'icon-192x192.png',
+                            vibrate: [200, 100, 200]
+                        });
+                        notifiedTasks.add(task.id);
+                        // Reseta o "notified" depois de um tempo
+                        setTimeout(() => notifiedTasks.delete(task.id), 61000);
+                    });
+                }
+            }
+        });
+    }
+
+    // --- 19. INICIALIZAÇÃO GERAL ---
+    populateTimeSelects(); 
     applyDarkMode(isDarkMode); 
     checkStreakOnLoad();    
     renderCalendar();       
     saveAndRenderAll();     
-    // renderFixedScheduleSummary(); // (Removido, já está em saveAndRenderAll)
     renderSavedLink(); 
+    updateNotificationButton(); // (NOVO)
+    setInterval(checkTaskReminders, 60000); // Checa a cada minuto (NOVO)
 
     // Registrar o Service Worker
     if ('serviceWorker' in navigator) {

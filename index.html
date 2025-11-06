@@ -1,4 +1,4 @@
-<!-- 05/11/2025 00:12 -->
+<!-- 05/11/2025 22:05 -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -13,7 +13,7 @@
 <body class=""> 
 
     <header>
-        <h1>👊 Rotina Diária do Flavero ✨</h1>
+        <h1>✨ Minha Rotina ✨</h1>
     </header>
 
     <main id="main-content">
@@ -25,7 +25,7 @@
             <div class="card reward-card">
                 <div class="reward-header">
                     <h3>🏆 Minhas Recompensas</h3>
-                    <span id="level-display" class="level-display">Nível 1</span>
+                    <span id="level-display" class="level-display">🌱 Nível 1</span>
                 </div>
                 <div class="xp-bar-container">
                     <div id="xp-bar-fill" class="xp-bar-fill"></div>
@@ -41,7 +41,9 @@
                 <button id="complete-day-btn" disabled>Salvar Dia</button>
             </div>
             
-            
+            <!-- Botão Dia de Folga -->
+            <button id="day-off-btn" class="day-off-button">Estou de Folga Hoje 🏖️</button>
+
             <!-- Mini Agenda Mensal -->
             <div class="card">
                 <h3>🗓️ Mini Agenda Mensal</h3>
@@ -74,16 +76,18 @@
 
             <div class="card">
                 <h3>📋 Resumo Afazeres (Pessoal)</h3>
-                <ul id="resumo-tarefas-pessoal" class="task-list">
-                    <!-- Tarefas pessoais pendentes (agora com botões) -->
-                </ul>
+                <!-- (ATUALIZADO) Container para categorias -->
+                <div id="resumo-tarefas-pessoal" class="task-category-container">
+                    <!-- Resumo das tarefas pessoais pendentes -->
+                </div>
             </div>
             
             <div class="card">
                 <h3>💼 Resumo Tarefas (Trabalho)</h3>
-                <ul id="resumo-tarefas-trabalho" class="task-list">
-                    <!-- Tarefas de trabalho pendentes (agora com botões) -->
-                </ul>
+                <!-- (ATUALIZADO) Container para categorias -->
+                <div id="resumo-tarefas-trabalho" class="task-category-container">
+                    <!-- Resumo das tarefas de trabalho pendentes -->
+                </div>
             </div>
 
             <!-- Dicas de Alongamento -->
@@ -107,11 +111,6 @@
                     <li><strong>Seja Gentil com Você:</strong> Perdeu um dia? Acontece. Apenas retome no dia seguinte sem culpa.</li>
                 </ul>
             </div>
-<!-- Botão Dia de Folga -->
-            <button id="day-off-btn" class="day-off-button">Estou de Folga Hoje 🏖️</button>
-
-
-
         </section>
 
         <!-- Aba Trabalho -->
@@ -121,7 +120,9 @@
                 <h3>Adicionar Tarefa</h3>
                 <form id="form-trabalho" class="task-form">
                     <input type="text" id="input-trabalho-text" class="form-input-text" placeholder="Ex: Preparar relatório..." autocomplete="off">
-                    <!-- (ATUALIZADO) Selects de Hora/Minuto -->
+                    <!-- (ATUALIZADO) Input de Categoria -->
+                    <input type="text" id="input-trabalho-category" class="form-input-category" placeholder="Categoria (Ex: Projeto X)" list="trabalho-categories" autocomplete="off">
+                    <datalist id="trabalho-categories"></datalist>
                     <select id="input-trabalho-hour" class="form-input-time-hour" aria-label="Hora"></select>
                     <select id="input-trabalho-minute" class="form-input-time-minute" aria-label="Minuto"></select>
                     <button type="submit">Adicionar</button>
@@ -129,9 +130,10 @@
             </div>
             <div class="card">
                 <h3>Lista de Tarefas</h3>
-                <ul id="lista-trabalho" class="task-list">
+                <!-- (ATUALIZADO) Container para categorias -->
+                <div id="lista-trabalho" class="task-category-container">
                     <!-- Lista de tarefas de trabalho -->
-                </ul>
+                </div>
             </div>
         </section>
 
@@ -142,7 +144,9 @@
                 <h3>Adicionar Afazer</h3>
                 <form id="form-pessoal" class="task-form">
                     <input type="text" id="input-pessoal-text" class="form-input-text" placeholder="Ex: Estudar JS por 30 min..." autocomplete="off">
-                    <!-- (ATUALIZADO) Selects de Hora/Minuto -->
+                    <!-- (ATUALIZADO) Input de Categoria -->
+                    <input type="text" id="input-pessoal-category" class="form-input-category" placeholder="Categoria (Ex: Estudos)" list="pessoal-categories" autocomplete="off">
+                    <datalist id="pessoal-categories"></datalist>
                     <select id="input-pessoal-hour" class="form-input-time-hour" aria-label="Hora"></select>
                     <select id="input-pessoal-minute" class="form-input-time-minute" aria-label="Minuto"></select>
                     <button type="submit">Adicionar</button>
@@ -150,9 +154,10 @@
             </div>
             <div class="card">
                 <h3>Minha Lista de Afazeres</h3>
-                <ul id="lista-pessoal" class="task-list">
+                <!-- (ATUALIZADO) Container para categorias -->
+                <div id="lista-pessoal" class="task-category-container">
                     <!-- Lista completa de afazeres pessoais -->
-                </ul>
+                </div>
             </div>
         </section>
 
@@ -183,7 +188,6 @@
                 <h3>Adicionar Item</h3>
                 <form id="form-entretenimento" class="task-form">
                     <input type="text" id="input-entretenimento-text" class="form-input-text" placeholder="Ex: Assistir 'Filme X'..." autocomplete="off">
-                    <!-- (ATUALIZADO) Selects de Hora/Minuto -->
                     <select id="input-entretenimento-hour" class="form-input-time-hour" aria-label="Hora"></select>
                     <select id="input-entretenimento-minute" class="form-input-time-minute" aria-label="Minuto"></select>
                     <button type="submit">Adicionar</button>
@@ -194,6 +198,28 @@
                 <ul id="lista-entretenimento" class="task-list">
                     <!-- Lista de entretenimento -->
                 </ul>
+            </div>
+        </section>
+
+        <!-- Aba Loja de Recompensas -->
+        <section id="loja" class="content-section">
+            <h2>🛍️ Loja de Recompensas</h2>
+            
+            <div class="card">
+                <h3>Minhas Recompensas</h3>
+                <p style="text-align: center; font-size: 1.2rem; margin-bottom: 1rem;">Seus Pontos: <strong id="loja-pontos-display" style="color: var(--points-color);">0</strong></p>
+                <ul id="lista-loja" class="reward-shop-list">
+                    <!-- Recompensas da loja aparecem aqui -->
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>Criar Nova Recompensa</h3>
+                <form id="form-loja" class="financial-form">
+                    <input type="text" id="input-loja-text" placeholder="Nome da Recompensa" required>
+                    <input type="number" id="input-loja-cost" placeholder="Custo (XP)" step="10" min="10" required>
+                    <button type="submit">Criar</button>
+                </form>
             </div>
         </section>
 
@@ -211,6 +237,12 @@
                     <button id="install-pwa-btn" class="settings-button btn-install" style="display: none;">Instalar</button>
                     <span id="install-pwa-info">App já instalado!</span>
                 </div>
+                <!-- (NOVO) Botão de Notificações -->
+                <div class="settings-group">
+                    <span>Lembretes de Tarefas</span>
+                    <button id="enable-notifications-btn" class="settings-button btn-install">Permitir</button>
+                    <span id="notifications-info" style="display: none;">Permitido!</span>
+                </div>
                 <div class="settings-group">
                     <span>Tema Escuro</span>
                     <label class="toggle-switch">
@@ -227,7 +259,6 @@
                 </div>
             </div>
 
-            <!-- (NOVO) Card de Gerenciamento de Tarefas Fixas -->
             <div class="card">
                 <h3>Gerenciar Horários Fixos</h3>
                 <form id="form-fixa" class="task-form">
@@ -275,6 +306,10 @@
                     <span>Limpar Lançamentos Financeiros</span>
                     <button id="reset-finance-btn" class="settings-button btn-warning">Limpar</button>
                 </div>
+                 <div class="settings-group">
+                    <span>Limpar Recompensas da Loja</span>
+                    <button id="reset-loja-btn" class="settings-button btn-warning">Limpar</button>
+                </div>
             </div>
             
             <div class="card">
@@ -295,7 +330,8 @@
                     <!-- Link salvo aparece aqui -->
                 </div>
                 
-                                <div class="about-links">
+                <p style="text-align: center; color: var(--text-color-secondary); margin-top: 1.5rem; margin-bottom: 1rem;">Minha Rotina WPA v1.5</p>
+                <div class="about-links">
                     <a href="https://www.flavioitech.com" target="_blank" rel="noopener noreferrer" class="settings-button btn-secondary">Website</a>
                     <a href="https://wa.me/5519998821845" target="_blank" rel="noopener noreferrer" class="settings-button btn-install">WhatsApp</a>
                 </div>
@@ -306,12 +342,14 @@
     <!-- Navegação por Abas -->
     <nav class="tab-nav">
         <button class="tab-button active" data-tab="inicio">🏠 Início</button>
-        <button class="tab-button" data-tab="trabalho">💼 Trabalho</button>
+        <button class="tab-button" data-tab="trabalho">💼 Trab.</button>
         <button class="tab-button" data-tab="pessoal">📋 Pessoal</button>
-        <button class="tab-button" data-tab="financeiro">💸 Financeiro</button>
+        <button class="tab-button" data-tab="financeiro">💸 Finc.</button>
         <button class="tab-button" data-tab="entretenimento">🍿 Entret.</button>
+        <button class="tab-button" data-tab="loja">🛍️ Loja</button>
         <button class="tab-button" data-tab="config">⚙️ Config.</button>
     </nav>
+
     <!-- Modal Genérico -->
     <div id="info-modal-overlay" class="modal-overlay">
         <div class="modal-content">
@@ -335,7 +373,6 @@
                 <p>O que você gostaria de fazer no seu dia livre?</p>
                 <form id="form-folga" class="task-form">
                     <input type="text" id="input-folga-text" class="form-input-text" placeholder="Ex: Ler um livro..." autocomplete="off">
-                    <!-- (ATUALIZADO) Selects de Hora/Minuto -->
                     <select id="input-folga-hour" class="form-input-time-hour" aria-label="Hora"></select>
                     <select id="input-folga-minute" class="form-input-time-minute" aria-label="Minuto"></select>
                     <button type="submit">Adicionar</button>
@@ -345,6 +382,16 @@
                 </ul>
             </div>
             <button id="folga-modal-close-btn">Fechar</button>
+        </div>
+    </div>
+
+    <!-- Modal de Level Up -->
+    <div id="level-up-modal-overlay" class="modal-overlay">
+        <div class="modal-content level-up-content">
+            <span id="level-up-icon" class="level-up-icon"></span>
+            <h2 id="level-up-text">Level Up!</h2>
+            <p>Você alcançou um novo nível!</p>
+            <button id="level-up-close-btn">Continuar</button>
         </div>
     </div>
 

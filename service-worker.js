@@ -1,7 +1,6 @@
-/* 05/11/2025 00:12 */
+/* 05/11/2025 22:05 */
 
-const CACHE_NAME = 'rotina-flavero-cache-v1';
-// Caminhos dos ícones na raiz
+const CACHE_NAME = 'rotina-flavero-cache-v1.5'; // (ATUALIZADO) Nova versão do cache
 const urlsToCache = [
     '/',
     'index.html',
@@ -38,7 +37,7 @@ self.addEventListener('fetch', event => {
     );
 });
 
-// Evento de Ativação: Limpa caches antigos (se necessário)
+// Evento de Ativação: Limpa caches antigos
 self.addEventListener('activate', event => {
     const cacheWhitelist = [CACHE_NAME];
     event.waitUntil(
@@ -46,10 +45,51 @@ self.addEventListener('activate', event => {
             return Promise.all(
                 cacheNames.map(cacheName => {
                     if (cacheWhitelist.indexOf(cacheName) === -1) {
-                        return caches.delete(cacheName);
+                        return caches.delete(cacheName); // Deleta caches antigos
                     }
                 })
             );
+        })
+    );
+});
+
+// --- (NOVO) Listeners de Notificação ---
+
+// Evento 'push' (para notificações push reais, se um servidor fosse usado)
+self.addEventListener('push', event => {
+    const data = event.data ? event.data.json() : { title: 'Rotina Flavero', body: 'Confira suas tarefas!' };
+    
+    const options = {
+        body: data.body,
+        icon: 'icon-192x192.png',
+        badge: 'icon-192x192.png',
+        vibrate: [200, 100, 200]
+    };
+    
+    event.waitUntil(
+        self.registration.showNotification(data.title, options)
+    );
+});
+
+// Evento 'notificationclick' (o que acontece ao clicar na notificação)
+self.addEventListener('notificationclick', event => {
+    event.notification.close(); // Fecha a notificação
+
+    // Foca o cliente (app) se ele estiver aberto, ou abre um novo
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+            // Se o app já estiver aberto, foca nele
+            if (clientList.length > 0) {
+                let client = clientList[0];
+                for (let i = 0; i < clientList.length; i++) {
+                    if (clientList[i].focused) {
+                        client = clientList[i];
+                    }
+                }
+                return client.focus();
+            }
+            // Se não estiver aberto, abre uma nova janela
+            return clients.openWindow('/');
         })
     );
 });
